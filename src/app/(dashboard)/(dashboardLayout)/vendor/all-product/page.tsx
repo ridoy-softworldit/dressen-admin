@@ -203,7 +203,7 @@ const CategoryPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-2 md:p-6">
       <div className="w-full space-y-6">
-        <HeaderActions products={paginatedProducts} />
+        <HeaderActions />
         {isLoading ? (
           <span>Loading...</span>
         ) : (

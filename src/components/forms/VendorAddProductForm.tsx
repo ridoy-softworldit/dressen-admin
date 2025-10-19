@@ -81,7 +81,7 @@ export default function VendorAddProductForm() {
         defaultValues: {
             shopId: "",
             video: "",
-            vendorId: currentUser?._id || "",
+            // vendorId: currentUser?._id || "",
             brandAndCategories: {
                 brand: "",
                 categories: [],

@@ -1,5 +1,14 @@
 
-import { WithdrawalsItem } from "@/components/tables/WithdrawalsManagementTable";
+// Define the type locally since it's not exported
+type WithdrawalsItem = {
+  amount: string;
+  name: string;
+  account: string;
+  date: string;
+  fees: string;
+  netAmount: number;
+  status: string;
+};
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Clock, CreditCard, ChartSpline } from "lucide-react";

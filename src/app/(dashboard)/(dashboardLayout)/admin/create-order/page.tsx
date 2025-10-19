@@ -34,11 +34,13 @@ const fields = [
 type SelectedProduct = {
   productId: string;
   quantity: number;
+  price?: number;
+  priceType?: string;
 };
 
 type paymentAndShipping = {
   paymentMethod: string;
-  shippingMethod: string;
+  shippingMethod?: string;
 };
 
 const CreateOrder = () => {
@@ -71,44 +73,47 @@ const CreateOrder = () => {
     }));
   };
 
+  const handleSelectPriceType = (productId: string, type: "retail" | "wholesale") => {
+    // Handle price type selection logic if needed
+  };
+
   const allSelectedProducts = products
     ?.filter((product: Product) =>
       selectedProducts.some((p) => p.productId === product._id)
     )
     .map((product: Product) => {
-      const qty =
-        selectedProducts.find((p) => p.productId === product._id)?.quantity ||
-        0;
-      return { ...product, quantity: qty };
-    });
+      const selectedProduct = selectedProducts.find((p) => p.productId === product._id);
+      const qty = selectedProduct?.quantity || 0;
+      const price = selectedProduct?.price || product.productInfo?.salePrice || product.productInfo?.price || 0;
+      const priceType = selectedProduct?.priceType || "retail";
+      return { ...product, quantity: qty, price, priceType };
+    }) || [];
 
   const shippingInfo = {
-    name: "Express Shipping",
+    name: "Free Shipping",
     type: "amount",
   };
 
-  const tax = 0;
   const discount = 0;
+  const shippingCost = 50;
   const orderInfo = allSelectedProducts?.map((product) => {
-    const subTotal =
-      (product.productInfo?.salePrice || product.productInfo?.price || 0) *
-      product.quantity;
-    const total = subTotal;
+    const subTotal = product.price * product.quantity;
+    const total = subTotal + shippingCost;
 
     return {
-      orderBy: currentUser?._id,
-      shopInfo: product.shopId,
       productInfo: product._id,
+      orderBy: currentUser?._id,
+      quantity: product.quantity,
       status: "pending",
       isCancelled: false,
-      quantity: product.quantity,
+      totalQuantity: product.quantity,
       totalAmount: {
         subTotal,
-        tax,
-        shipping: shippingInfo,
         discount,
         total,
+        shipping: shippingInfo,
       },
+      commission: { type: "fixed", value: 5, amount: 0 },
     };
   });
 
@@ -119,19 +124,15 @@ const CreateOrder = () => {
 
   const finalOrder = {
     orderInfo,
-    totalAmount: overallTotal,
     customerInfo: {
       firstName: formData.firstName,
       lastName: formData.lastName,
-      email: formData.email,
       phone: formData.phone,
       address: formData.address,
-      city: formData.city,
-      postalCode: formData.postalcode,
       country: formData.country,
     },
     paymentInfo: paymentAndShipping.paymentMethod,
-    orderNote: orderNote,
+    totalAmount: overallTotal,
   };
 
   const CreateFinalOrder = async () => {
@@ -221,6 +222,7 @@ const CreateOrder = () => {
             searchTerm={searchTerm}
             selectedProducts={selectedProducts}
             setSelectedProducts={setSelectedProducts}
+            handleSelectPriceType={handleSelectPriceType}
           />{" "}
           {/* Use fetched products */}
           <OrderItems

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateBrandMutation } from "@/redux/featured/brands/brandsApi";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import Image from "next/image";
 
 interface IconField {

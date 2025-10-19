@@ -15,7 +15,7 @@ import {
   useGetSingleBrandQuery,
   useUpdateBrandMutation,
 } from "@/redux/featured/brands/brandsApi";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import Image from "next/image";
 
 interface IconField {
@@ -83,7 +83,7 @@ const BrandEditor = ({ brandId }: { brandId: string }) => {
           formData.append("sliderImage", image.file);
       }
 
-      await updateBrand({ id: brandId, formData }).unwrap();
+      await updateBrand({ id: brandId, data: formData }).unwrap();
       toast.success("Brand updated successfully!");
     } catch (error) {
       toast.error("Failed to update brand!");
