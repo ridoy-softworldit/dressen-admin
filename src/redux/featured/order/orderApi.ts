@@ -8,6 +8,7 @@ export interface CommissionSummary {
   totalCommission: number;
   averagePercentageRate: number;
   totalSaleAmount: number;
+  totalQuantity:number;
 }
 const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({

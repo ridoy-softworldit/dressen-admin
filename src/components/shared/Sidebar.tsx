@@ -24,6 +24,9 @@ import {
   ChevronDown,
   Box,
   PlusCircle,
+  Settings,
+  MapPin,
+  ArrowRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +37,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useAppSelector } from "@/redux/hooks";
 import { selectCurrentUser } from "@/redux/featured/auth/authSlice";
+import { IoColorFill } from "react-icons/io5";
 
 type Role = "admin" | "vendor" | "sr" | "customer" | "user";
 
@@ -161,7 +165,7 @@ export function AppSidebar({
           href: "/admin/add-new-product",
         },
       ],
-     WithdrawalsManagement: [
+      WithdrawalsManagement: [
         {
           icon: CreditCard as IconRenderer,
           label: "Withdrawals Manage",
@@ -174,11 +178,56 @@ export function AppSidebar({
           label: "Orders",
           href: "/admin/order",
         },
+        // {
+        //   icon: ArrowRightLeft as IconRenderer,
+        //   label: "Transactions",
+        //   href: "/admin/transaction",
+        // },
+      ],
+      settingManagement: [
         {
-          icon: ArrowRightLeft as IconRenderer,
-          label: "Transactions",
-          href: "/admin/transaction",
+          icon: Settings as IconRenderer,
+          label: "General Settings",
+          href: "/admin/settings/general",
         },
+        {
+          icon: IoColorFill as IconRenderer,
+          label: "Appearance",
+          href: "/admin/settings/appearance",
+        },
+        {
+          icon: Tag as IconRenderer,
+          label: "Coupons",
+          href: "/admin/settings/coupons",
+        },
+      ],
+       // -------- Courier Management (Separate Section) --------
+      courierManagement: [
+        {
+          icon: Truck as IconRenderer,
+          label: "Courier Dashboard",
+          href: "/admin/courier/dashboard",
+        },
+        // {
+        //   icon: Package as IconRenderer,
+        //   label: "Create Order",
+        //   href: "/admin/courier/create-order",
+        // },
+        // {
+        //   icon: Package as IconRenderer,
+        //   label: "Bulk Orders",
+        //   href: "/admin/courier/bulk-order",
+        // },
+        // {
+        //   icon: MapPin as IconRenderer,
+        //   label: "Track Delivery",
+        //   href: "/admin/courier/track-delivery",
+        // },
+        // {
+        //   icon: ArrowRight as IconRenderer,
+        //   label: "Return Requests",
+        //   href: "/admin/courier/return-requests",
+        // },
       ],
       orderVendor: [
         {
@@ -209,12 +258,12 @@ export function AppSidebar({
     {
       icon: Calculator as IconRenderer,
       label: "withdrawal Status",
-      href: "/sr/approved-deposits",
+      href: "/sr/approved-withdrawal",
     },
     {
       icon: PlusCircle as IconRenderer,
       label: "Create Withdrawal",
-      href: "/sr/create-deposits",
+      href: "/sr/create-withdrawal",
     },
   ] as const;
 
@@ -394,7 +443,7 @@ export function AppSidebar({
         )}
       >
         <Image
-          src="/Dressen.png"
+          src="/dressen.png"
           alt="Logo"
           width={30}
           height={30}
@@ -402,7 +451,7 @@ export function AppSidebar({
         />
         {!isCollapsed && (
           <h1 className="text-lg font-bold text-black truncate transition-opacity duration-200">
-            Dressen
+            dressen
           </h1>
         )}
       </div>
@@ -506,6 +555,13 @@ export function AppSidebar({
                 "ORDER MANAGEMENT",
                 navigationItems.orderManagement
               )}
+            </div>
+
+            <div className="ml-1">
+              {renderSection("SETTING", navigationItems.settingManagement)}
+            </div>
+            <div className="ml-1">
+              {renderSection("COURIER MANAGEMENT", navigationItems.courierManagement)}
             </div>
 
             <div key="user-control-section" className="space-y-2">

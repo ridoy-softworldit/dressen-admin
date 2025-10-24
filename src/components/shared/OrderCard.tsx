@@ -16,6 +16,12 @@ export default function OrderCard({ summary }: { summary: any }) {
       color: "text-blue-500",
     },
     {
+      label: "Cancel Orders",
+      value: summary?.canceledOrders || 0,
+      icon: <ShoppingBag className="w-5 h-5 text-blue-500" />,
+      color: "text-blue-500",
+    },
+    {
       label: "Pending Orders",
       value: summary?.pendingOrders || 0,
       icon: <CircleDollarSign className="w-5 h-5 text-orange-500" />,
@@ -30,6 +36,12 @@ export default function OrderCard({ summary }: { summary: any }) {
     {
       label: "SR Orders",
       value: summary?.srOrders || 0,
+      icon: <TrendingUp className="w-5 h-5 text-indigo-500" />,
+      color: "text-indigo-500",
+    },
+    {
+      label: "SR canceled Orders",
+      value: summary?.srCanceledOrders || 0,
       icon: <TrendingUp className="w-5 h-5 text-indigo-500" />,
       color: "text-indigo-500",
     },

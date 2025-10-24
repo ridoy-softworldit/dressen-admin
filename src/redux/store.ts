@@ -15,25 +15,6 @@ import {
   REHYDRATE,
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
-import createWebStorage from "redux-persist/lib/storage/createWebStorage";
-
-const createNoopStorage = () => {
-  return {
-    getItem() {
-      return Promise.resolve(null);
-    },
-    setItem() {
-      return Promise.resolve();
-    },
-    removeItem() {
-      return Promise.resolve();
-    },
-  };
-};
-
-const storageConfig = typeof window !== "undefined" 
-  ? createWebStorage("local") 
-  : createNoopStorage();
 
 const rootReducer = combineReducers({
   [baseApi.reducerPath]: baseApi.reducer,
@@ -47,7 +28,7 @@ const rootReducer = combineReducers({
 });
 const persistConfig = {
   key: "root",
-  storage: storageConfig,
+  storage,
   whitelist: ["auth"],
 };
 const persistedReducers = persistReducer(persistConfig, rootReducer);

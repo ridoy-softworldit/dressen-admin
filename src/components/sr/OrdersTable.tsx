@@ -69,10 +69,13 @@ function OrderModal({
   order: any;
   isOpen: boolean;
   onClose: () => void;
+  // 1. ✅ REMOVED orderStatus prop
 }) {
   if (!order) return null;
 
   const items = order.orderInfo || [];
+  // 2. ✅ Get status from the order object itself
+  const status = order.status || "other";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -131,7 +134,6 @@ function OrderModal({
 
             <div className="space-y-3">
               {items.map((item: any, idx: number) => {
-                const status = item.status || "other";
                 const product = item.productInfo || {};
                 const desc = product.description || {};
                 const total = item.totalAmount || {};
@@ -146,6 +148,7 @@ function OrderModal({
                             <h5 className="font-semibold text-base">
                               {desc.name}
                             </h5>
+                            {/* 3. ✅ Use the correct 'status' variable */}
                             <Badge className={toStatusBadge(status)}>
                               {status}
                             </Badge>
@@ -158,7 +161,7 @@ function OrderModal({
                             </div>
                             <div>
                               <span className="font-medium">Quantity:</span>{" "}
-                              {item.totalQuantity || 1}
+                              {item.quantity || 1}
                             </div>
                             <div>
                               <span className="font-medium">Sub Total:</span>{" "}
@@ -238,8 +241,9 @@ export default function OrdersTable() {
     }
 
     if (status !== "ALL") {
+      // 4. ✅ FIXED: Filter by o.status at the root
       result = result.filter(
-        (o) => o.orderInfo?.[0]?.status?.toLowerCase() === status.toLowerCase()
+        (o) => o.status?.toLowerCase() === status.toLowerCase()
       );
     }
 
@@ -264,6 +268,9 @@ export default function OrdersTable() {
 
     return result;
   }, [orders, query, status, sort]);
+
+  // 5. ✅ DELETED the 'orderStatuses' variable
+  // const orderStatuses = orders.map((o) => o.status);
 
   if (isLoading) return <div>Loading orders...</div>;
 
@@ -343,8 +350,6 @@ export default function OrdersTable() {
                   const name = `${order.customerInfo.firstName ?? ""} ${
                     order.customerInfo.lastName ?? ""
                   }`.trim();
-                  const status = order.orderInfo?.[0]?.status || "other";
-
                   return (
                     <TableRow key={order._id} className="hover:bg-muted/40">
                       <TableCell className="font-medium">{order._id}</TableCell>
@@ -362,8 +367,11 @@ export default function OrdersTable() {
                         {new Date(order.createdAt).toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        <Badge className={toStatusBadge(status)}>
-                          {status}
+                        {/* ✅ FIX: Add a fallback value for undefined status */}
+                        <Badge
+                          className={toStatusBadge(order.status || "other")}
+                        >
+                          {order.status || "other"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold">
@@ -403,7 +411,8 @@ export default function OrdersTable() {
         {filteredOrders.map((order) => {
           const name =
             `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim();
-          const status = order.orderInfo?.[0]?.status || "other";
+          // 7. ✅ FIXED: Get status from order.status
+          const status = order.status || "other";
 
           return (
             <Card key={order._id} className="border shadow-sm">
@@ -456,6 +465,7 @@ export default function OrdersTable() {
       <OrderModal
         order={selectedOrder}
         isOpen={isModalOpen}
+        // 8. ✅ REMOVED the 'orderStatus' prop
         onClose={() => setIsModalOpen(false)}
       />
     </div>

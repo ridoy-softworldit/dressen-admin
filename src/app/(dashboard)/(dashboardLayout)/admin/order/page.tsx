@@ -41,8 +41,6 @@ type Order = {
   createdAt: string;
   customer: string;
   total: number;
-  profit: number;
-  profit_percent: number;
   status: OrderStatus;
   userType: "sr" | "customer";
 };
@@ -57,16 +55,20 @@ const ORDER_STATUSES: OrderStatus[] = [
 ];
 
 const OrderPage = () => {
+  // ✅ FIX 1: Correctly read the data array from the hook.
+  // Your data structure is an array `[...]`, not a nested object.
   const { data: orderData = [] } = useGetAllOrdersQuery();
+
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
 
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<OrderStatus>("pending");
   const [searchValue, setSearchValue] = useState("");
 
-  const [sortType, setSortType] = useState<"sr" | "customer">("sr");
+  const [sortType, setSortType] = useState<"customer" | "sr">("customer");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const [ordersByStatus, setOrdersByStatus] = useState<
     Record<OrderStatus, Order[]>
@@ -90,30 +92,24 @@ const OrderPage = () => {
     if (!orderData || orderData.length === 0) return;
 
     const transformOrder = (raw: any): Order => {
-      const hasSr =
-        Array.isArray(raw.orderInfo) &&
-        raw.orderInfo.some((info: any) => info.userRole === "sr");
+      const userRole = raw.userRole || "customer";
+
+      // ✅ FIX 2: Type-safe status check to fix TypeScript error
+      let orderStatus: OrderStatus = "pending";
+      if (raw.status && ORDER_STATUSES.includes(raw.status)) {
+        orderStatus = raw.status;
+      }
 
       return {
         order_id: raw._id,
         created: new Date(raw.createdAt).toLocaleString(),
         createdAt: raw.createdAt,
         customer:
-          `${raw.customerInfo.firstName} ${raw.customerInfo.lastName}` ||
+          `${raw.customerInfo.firstName} ${raw.customerInfo.lastName}`.trim() ||
           "Unknown",
         total: raw.totalAmount || 0,
-        profit:
-          raw.orderInfo?.reduce(
-            (acc: number, item: any) => acc + (item.commission?.amount || 0),
-            0
-          ) || 0,
-        profit_percent:
-          raw.orderInfo?.reduce(
-            (acc: number, item: any) => acc + (item.commission?.value || 0),
-            0
-          ) || 0,
-        status: raw.orderInfo[raw.orderInfo.length - 1]?.status || "pending",
-        userType: hasSr ? "sr" : "customer",
+        status: orderStatus, // Use the validated status
+        userType: userRole === "sr" ? "sr" : "customer",
       };
     };
 
@@ -128,10 +124,10 @@ const OrderPage = () => {
       paid: [],
     };
 
+    // This grouping logic is now safe because `order.status` is guaranteed
+    // to be of type `OrderStatus` by the `transformOrder` function.
     transformed.forEach((order) => {
-      if (ORDER_STATUSES.includes(order.status))
-        grouped[order.status].push(order);
-      else grouped["pending"].push(order);
+      grouped[order.status].push(order);
     });
 
     setOrdersByStatus(grouped);
@@ -144,6 +140,7 @@ const OrderPage = () => {
     try {
       await updateOrderStatus({ id: orderId, status: newStatus }).unwrap();
 
+      // Find which status list the order is currently in
       const currentStatus = Object.keys(ordersByStatus).find((status) =>
         ordersByStatus[status as OrderStatus].some(
           (o) => o.order_id === orderId
@@ -152,18 +149,23 @@ const OrderPage = () => {
 
       if (!currentStatus || newStatus === currentStatus) return;
 
+      // Find the order
       const updatedOrder = ordersByStatus[currentStatus].find(
         (o) => o.order_id === orderId
       );
       if (!updatedOrder) return;
 
+      // Create a new order object with the updated status
       const newOrder = { ...updatedOrder, status: newStatus };
 
+      // Optimistically update the state
       const updatedOrdersByStatus = {
         ...ordersByStatus,
+        // Remove from old status list
         [currentStatus]: ordersByStatus[currentStatus].filter(
           (o) => o.order_id !== orderId
         ),
+        // Add to new status list
         [newStatus]: [newOrder, ...ordersByStatus[newStatus]],
       };
 
@@ -191,8 +193,10 @@ const OrderPage = () => {
       .filter((item) => {
         if (startDate && endDate) {
           const created = new Date(item.createdAt).getTime();
-          const start = new Date(startDate).getTime();
-          const end = new Date(endDate).getTime();
+          // Adjust start date to be start of the day
+          const start = new Date(startDate).setHours(0, 0, 0, 0);
+          // Adjust end date to be end of the day
+          const end = new Date(endDate).setHours(23, 59, 59, 999);
           return created >= start && created <= end;
         }
         return true;
@@ -233,14 +237,54 @@ const OrderPage = () => {
 
         {/* Sort + Filter by Date */}
         <div className="flex flex-wrap gap-2">
-          <select
-            value={sortType}
-            onChange={(e) => setSortType(e.target.value as "sr" | "customer")}
-            className="rounded-md bg-white text-gray-500 px-3 py-2 text-sm shadow-sm border"
-          >
-            <option value="sr">Sort by: SR</option>
-            <option value="customer">Sort by: Customer</option>
-          </select>
+          <div className="relative inline-block">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center gap-2 rounded-md bg-white text-gray-700 px-4 py-3 text-sm border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              <span>
+                Sort by: {sortType === "customer" ? "Customer" : "SR"}
+              </span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {isOpen && (
+              <div className="absolute left-0 mt-2 w-42 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setSortType("customer");
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left  px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors rounded-md"
+                  >
+                    Sort by: Customer
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortType("sr");
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left  px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors rounded-md"
+                  >
+                    Sort by: SR
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-md shadow-sm">
             <span className="text-sm text-gray-500">Filter by date:</span>
@@ -271,9 +315,9 @@ const OrderPage = () => {
             <Tabs.Trigger
               key={status}
               value={status}
-              className="flex-1 h-[45px] px-4 bg-white text-sm text-center hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:border-b-2 data-[state=active]:border-violet-500"
+              className="flex-1 h-[45px] px-4 bg-white text-sm text-center hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:border-b-2 data-[state=active]:border-violet-500 capitalize"
             >
-              {status}
+              {status.replace("-", " ")} ({getFilteredOrders(status).length})
             </Tabs.Trigger>
           ))}
         </Tabs.List>
@@ -293,7 +337,6 @@ const OrderPage = () => {
                     <TableHead className="text-gray-400">CREATED</TableHead>
                     <TableHead className="text-gray-400">CUSTOMER</TableHead>
                     <TableHead className="text-gray-400">TOTAL</TableHead>
-                    <TableHead className="text-gray-400">PROFIT</TableHead>
                     <TableHead className="text-gray-400">STATUS</TableHead>
                     <TableHead />
                   </TableRow>
@@ -327,18 +370,10 @@ const OrderPage = () => {
                         <TableCell>{item.customer}</TableCell>
                         <TableCell>৳{item.total}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span>৳{item.profit}</span>
-                            <span className="bg-green-100 text-green-800 px-2 py-0.5 text-xs rounded-md font-semibold">
-                              {item.profit_percent}%
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
-                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md ${
+                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md capitalize ${
                                   item.status === "pending"
                                     ? "bg-yellow-100 text-yellow-800"
                                     : item.status === "processing"
@@ -352,13 +387,14 @@ const OrderPage = () => {
                                     : "bg-red-100 text-red-800"
                                 }`}
                               >
-                                {item.status}
+                                {item.status.replace("-", " ")}
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                               {ORDER_STATUSES.map((statusOption) => (
                                 <DropdownMenuItem
                                   key={statusOption}
+                                  className="capitalize"
                                   onSelect={() =>
                                     handleStatusChange(
                                       item.order_id,
@@ -366,7 +402,7 @@ const OrderPage = () => {
                                     )
                                   }
                                 >
-                                  {statusOption}
+                                  {statusOption.replace("-", " ")}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuContent>
@@ -392,30 +428,26 @@ const OrderPage = () => {
                 {/* Logic for showing limited page numbers */}
                 {(() => {
                   const pages = [];
-                  const maxButtons = 5; // একসাথে যতগুলো বাটন দেখাতে চাও
+                  const maxButtons = 5;
                   let start = Math.max(
                     1,
                     currentPage - Math.floor(maxButtons / 2)
                   );
                   const end = Math.min(totalPages, start + maxButtons - 1);
 
-                  // যদি শেষের দিকে চলে যায়, শুরু ঠিক করা
                   if (end - start < maxButtons - 1) {
                     start = Math.max(1, end - maxButtons + 1);
                   }
 
-                  // প্রথম পেজ দেখাও
                   if (start > 1) {
                     pages.push(1);
                     if (start > 2) pages.push("...");
                   }
 
-                  // মাঝের পেজগুলো
                   for (let i = start; i <= end; i++) {
                     pages.push(i);
                   }
 
-                  // শেষ পেজ দেখাও
                   if (end < totalPages) {
                     if (end < totalPages - 1) pages.push("...");
                     pages.push(totalPages);
@@ -475,11 +507,13 @@ const OrderPage = () => {
             </div>
 
             {(() => {
+              // This .find() will now work correctly on the orderData array
               const rawOrder = orderData.find(
                 (o: any) => o._id === expandedOrder
               );
               if (!rawOrder) return <p>Order not found.</p>;
 
+              // All logic below is correct for your data structure
               return (
                 <div ref={contentRef} className="space-y-6 px-4">
                   {/* Header */}
@@ -495,25 +529,20 @@ const OrderPage = () => {
                     </p>
                   </div>
 
-                  {Array.isArray(rawOrder?.orderInfo) &&
-                    rawOrder.orderInfo[0] && (
-                      <div className="flex flex-col gap-1 font-medium">
-                        <p className="text-sm text-gray-600">
-                          Order By :{" "}
-                          {(rawOrder.orderInfo[0] as any).userRole || "Unknown"}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Name :{" "}
-                          {(rawOrder.orderInfo[0] as any).orderBy?.name ||
-                            "Unknown"}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Id:{" "}
-                          {(rawOrder.orderInfo[0] as any).orderBy?._id ||
-                            "Unknown"}
-                        </p>
-                      </div>
-                    )}
+                  {/* Order By info from root */}
+                  <div className="flex flex-col gap-1 font-medium">
+                    <p className="text-sm text-gray-600 capitalize">
+                      Order By : {rawOrder.userRole || "Unknown"}
+                    </p>
+                  { (rawOrder.orderBy?.name ) &&
+                      <p className="text-sm text-gray-600">
+                      Name : {rawOrder.orderBy?.name || "Unknown"}
+                    </p>
+                  }
+                  { (rawOrder.orderBy?._id) && <p className="text-sm text-gray-600">
+                      Id: {rawOrder.orderBy?._id || "Unknown"}
+                    </p>}
+                  </div>
 
                   {/* Customer Info + Payment */}
                   <div className="flex flex-col sm:flex-row justify-between gap-6">
@@ -582,14 +611,16 @@ const OrderPage = () => {
                               <TableCell>
                                 {item?.productInfo?.description?.name}
                               </TableCell>
-                              <TableCell>{item.trackingNumber}</TableCell>
+                              <TableCell>{rawOrder.trackingNumber}</TableCell>
                               <TableCell className="text-right">
                                 {item.selectedPrice}
                               </TableCell>
                               <TableCell className="text-right">
-                                {item.totalQuantity}
+                                {item.quantity}
                               </TableCell>
-                              <TableCell>{item.status}</TableCell>
+                              <TableCell className="capitalize">
+                                {rawOrder?.status || ""}
+                              </TableCell>
                               <TableCell className="text-right">
                                 ৳{item.totalAmount.total}
                               </TableCell>

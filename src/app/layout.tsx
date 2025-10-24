@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Providers from "@/lib/providers";
-import { AuthProvider, AuthSync } from "@/provider/AuthProvider";
+import { AuthProvider } from "@/provider/AuthProvider";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { RedirectComponent } from "./redirect";
@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dressen Admin",
+  title: "dressen Admin",
   description: "Vendor management website",
 };
 
@@ -33,9 +33,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Providers>
-            <AuthSync>
-              <RedirectComponent>{children}</RedirectComponent>
-            </AuthSync>
+            <RedirectComponent>{children}</RedirectComponent>
           </Providers>
         </AuthProvider>
         <Toaster position="top-right" />

@@ -58,6 +58,7 @@ export interface Product {
   productType: string;
   productInfo: {
     price: number;
+    name?: string;
     salePrice?: number;
     wholeSalePrice?: number;
     quantity: number;

@@ -21,7 +21,7 @@ export default function SRDashboard() {
         {/* Total product sales - can map totalOrders if needed */}
         <TotalProductSaleCard
           totalAmount={commissionSummary?.totalSaleAmount || 0} // total commission as amount
-          totalCount={commissionSummary?.completedOrders || 0} // total orders
+          totalCount={commissionSummary?.totalQuantity|| 0} // total orders
         />
 
         {/* Commission card */}
@@ -35,7 +35,7 @@ export default function SRDashboard() {
 
         {/* Total sale quantity */}
         <SrTotalSaleQuantityCard
-          quantity={commissionSummary?.completedOrders || 0} // show completed orders
+          quantity={commissionSummary?.totalQuantity|| 0} // show completed orders
           unit="orders"
           diffPercent={12.4} // optional
           period="Last 30 days"

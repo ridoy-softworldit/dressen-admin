@@ -112,7 +112,8 @@ const CreateOrder = () => {
       if (!product) return null;
       return {
         ...product,
-        quantity: sel.quantity,
+        // ✅ Ensure quantity is always a number
+        quantity: Number(sel.quantity) || 1,
         priceType: sel.priceType,
         price: sel.price,
         commission: sel.commission,
@@ -129,30 +130,30 @@ const CreateOrder = () => {
   const discount = 0;
   const shipping = { name: "Standard Shipping", type: "free" };
 
-  // ✅ Generate final order info
-  // ✅ Generate final order info
-  const orderInfo = allSelectedProducts?.map((product) => {
-    const price = product.price; // এইটা frontend থেকে calculate করা হয়েছে
-    const subTotal = price * product.quantity;
-
+  //
+  // =================================================================
+  // ✅ SCHEMEA FIX 1: Correctly generate `orderInfo`
+  // =================================================================
+  //
+  // Your schema expects `orderInfo` to be an array, and each item in
+  // that array *must* have a `products` array inside it.
+  //
+  const orderInfo = allSelectedProducts.map((product) => {
+    const subTotal = product.price * product.quantity;
+    const price = product.price
     const commissionType = product.commission?.type || "fixed";
     const commissionValue = Number(product.commission?.value || 0);
 
     return {
-      orderBy: currentUser?._id,
-      userRole: currentUser?.role,
       productInfo: product._id,
-      selectedPrice: Number(price), // ✅ এখানে শুধু amount pathano হলো
-      status: "pending",
-      isCancelled: false,
-      quantity: product.quantity,
-      totalQuantity: product.quantity,
+      quantity: Number(product.quantity) || 1,
+      selectedPrice:price,
       totalAmount: {
         subTotal,
-        tax,
-        shipping,
         discount,
-        total: subTotal,
+        tax,
+        total: subTotal, // or add tax/shipping if needed
+        shipping,
       },
       commission: {
         type: commissionType,
@@ -162,19 +163,20 @@ const CreateOrder = () => {
             ? (subTotal * commissionValue) / 100
             : commissionValue,
       },
-      priceType: product.priceType, // retail / wholesale
-      price: price,
     };
   });
 
-  const overallTotal = orderInfo?.reduce(
+  const overallTotal = orderInfo.reduce(
     (acc, item) => acc + item.totalAmount.total,
     0
   );
 
   const finalOrder = {
+    orderBy: currentUser?._id,
+    userRole: currentUser?.role,
+    status: "pending",
+    isCancelled: false,
     orderInfo,
-    totalAmount: overallTotal,
     customerInfo: {
       firstName: formData.firstName,
       lastName: formData.lastName,
@@ -182,12 +184,30 @@ const CreateOrder = () => {
       address: formData.address,
       country: "Bangladesh",
     },
-    paymentInfo: payment.paymentMethod,
-    orderNote: orderNote,
+    paymentInfo: payment.paymentMethod, // ✅ as string
+    totalAmount: overallTotal,
   };
-
   // ✅ Create order function
   const CreateFinalOrder = async () => {
+    //
+    // =================================================================
+    // ✅ SCHEMEA FIX 3: Client-side quantity validation
+    // =================================================================
+    //
+    if (!selectedProducts || selectedProducts.length === 0) {
+      return toast.error("Please add at least one product to the order.");
+    }
+
+    // This check prevents the "Quantity is required!" error from the backend
+    const hasInvalidQuantity = selectedProducts.some(
+      (p) => !p.quantity || p.quantity <= 0
+    );
+
+    if (hasInvalidQuantity) {
+      return toast.error("All products must have a quantity of at least 1.");
+    }
+
+    // --- Your existing checks ---
     if (!payment.paymentMethod)
       return toast.error("Payment Method is required!");
     if (!formData.firstName) return toast.error("First Name is required!");
@@ -210,10 +230,16 @@ const CreateOrder = () => {
       toast.success("Order placed successfully!");
 
       // ✅ Redirect using window.location
-      window.location.href = "/sr/orders"; // page reload সহ redirect
-    } catch (error) {
+      window.location.href = "/sr/orders";
+    } catch (error: any) {
+      console.error(error);
       setCreateOrderLoading(false);
-      toast.error("Failed to place order.");
+
+      // Display the specific backend error if it exists
+      const errorMessage =
+        error?.data?.error?.errorSources?.[0]?.message ||
+        "Failed to place order.";
+      toast.error(errorMessage);
     }
   };
 
@@ -233,7 +259,7 @@ const CreateOrder = () => {
         </span>
 
         <span className="flex items-center gap-2">
-          <Button onClick={CreateFinalOrder}>
+          <Button onClick={CreateFinalOrder} disabled={createOrderLoading}>
             <ShoppingCart />
             {createOrderLoading ? "Creating..." : "Create Order"}
           </Button>

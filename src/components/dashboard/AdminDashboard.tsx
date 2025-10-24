@@ -59,47 +59,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="p-4 space-y-6">
-      {/* Header */}
-      {/* <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Explore now</h1>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="rounded-full border border-gray-300 px-3 py-2 text-xs sm:text-sm font-medium
-                flex items-center gap-2 whitespace-nowrap
-                hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500
-                transition duration-200 ease-in-out"
-              aria-label="Select date range"
-            >
-              <CalendarIcon className="w-4 h-4 text-gray-600" />
-              <span className="text-gray-700 select-none hidden sm:inline">
-                {date ? format(date, "PPP") : "Last 28 Days"}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-600" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" side="bottom" align="end">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      </div> */}
-
-      {/* Row 1: Sales and Sessions */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <SalesCostCard />
-        </div>
-        <SessionCard />
-      </div> */}
-
-      {/* Row 2: Orders and Vendors (Dynamic Loop) */}
+  
       <OrderCard summary={summary} />
 
       {/* Row 3: Shops */}

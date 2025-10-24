@@ -192,7 +192,7 @@ export function TopNavbar({ isSidebarOpen, toggleSidebar }: TopNavbarProps) {
                     <span className="ml-2">Create Shop</span>
                   </Button>
                 </Link>
-                <Link href={`https://Dressen-home.vercel.app/`}>
+                <Link href={`https://dressen-home.vercel.app/`}>
                   <Button
                     variant="outline"
                     size="sm"

@@ -35,12 +35,8 @@ import { useGetAllTagsQuery } from "@/redux/featured/tags/tagsApi";
 import { useGetAllBrandsQuery } from "@/redux/featured/brands/brandsApi";
 
 const CategoryPage = () => {
-  const {
-    data: allProducts,
-    isLoading: ProductsLoading,
-    refetch,
-  } = useGetAllProductsQuery({});
-  const router = useRouter();
+  const { data: allProducts, isLoading: ProductsLoading, refetch } = useGetAllProductsQuery({ page: 1, limit: 50000 });
+  const router = useRouter()
   const { data: allCategories, isLoading } = useGetAllCategoriesQuery();
   const [deleteProduct] = useDeleteProductMutation();
   const dispatch = useAppDispatch();

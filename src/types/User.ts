@@ -12,4 +12,5 @@ export interface User {
   walletPoint?: number; 
   createdAt?: string;
   updatedAt?: string;
+  commissionBalance?:number
 }

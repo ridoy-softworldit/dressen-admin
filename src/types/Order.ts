@@ -20,9 +20,9 @@ export interface Commission {
 export interface OrderItem {
   orderBy: string;
   shopInfo: string;
+  status?: string;
   productInfo: string;
   trackingNumber: string;
-  status: string;
   isCancelled: boolean;
   quantity: number;
   totalAmount: OrderTotalAmount;
@@ -42,9 +42,17 @@ export interface CustomerInfo {
 
 export interface Order {
   _id: string;
+  userRole: string;
+  orderBy: {
+    _id: string;
+    name: string;
+    email?: string;
+  };
+  trackingNumber:string,
   orderInfo: OrderItem[];
   customerInfo: CustomerInfo;
   paymentInfo: string;
+  status?: string;
   totalAmount: number;
   createdAt: string;
   updatedAt: string;
@@ -52,5 +60,5 @@ export interface Order {
   totalQuantity?: number;
   totalCommission?: number;
   commissionRate?: number;
-  averagePercentageRate?:number;
+  averagePercentageRate?: number;
 }
